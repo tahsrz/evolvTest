@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace evolvAutoFramework.Base
 {
@@ -18,15 +19,8 @@ namespace evolvAutoFramework.Base
 
         public IWebElement FindElementInCollectionByAttribute(string attribute, string value, ReadOnlyCollection<IWebElement> webElements)
         {
-            foreach (var webElement in webElements)
-            {
-                if (value == webElement.GetAttribute(attribute))
-                {
-                    return webElement;
-                }
-            }
-
-            throw new Exception($"IWebelement with Attribute: {attribute} and Value: {value} could not be found.");
+            return webElements.FirstOrDefault(webElement => value == webElement.GetAttribute(attribute))
+                ?? throw new Exception($"IWebElement with Attribute: {attribute} and Value: {value} could not be found.");
         }
 
         public string GetCurrentWindowHandle()
@@ -42,17 +36,19 @@ namespace evolvAutoFramework.Base
         public void SwitchWindowLast()
         {
             PreviousWindows.Push(Driver.CurrentWindowHandle);
-            Driver.SwitchTo().Window(Driver.WindowHandles[Driver.WindowHandles.Count - 1]);
+            Driver.SwitchTo().Window(Driver.WindowHandles.Last());
         }
 
         public void SwitchToPreviousWindow()
         {
-            Driver.SwitchTo().Window(PreviousWindows.Pop());
-        }
+            {
+                if (PreviousWindows.Count == 0)
+                {
+                    throw new InvalidOperationException("There is no previous window to switch to.");
+                }
 
-        public void CloseCurrentWindow()
-        {
-            Driver.Close();
+                Driver.SwitchTo().Window(PreviousWindows.Pop());
+            }
         }
     }
 }
